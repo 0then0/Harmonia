@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Harmonia local credentials and generated build/test artifacts
+private/
+browser.json
+oauth.json
+coverage.xml
+.ruff_cache/
+dist/
+.playwright-mcp/

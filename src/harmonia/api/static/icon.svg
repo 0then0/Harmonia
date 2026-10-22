@@ -1,0 +1,15 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 128 128"
+  role="img"
+  aria-labelledby="title desc"
+>
+<title id="title">Harmonia</title><desc
+    id="desc"
+  >Three independent paths meet a single musical record.</desc>
+<rect width="128" height="128" rx="28" fill="#102d35" />
+<g fill="none" stroke="#61d8bd" stroke-width="5" stroke-linecap="round">
+<path d="M18 30h15c21 0 13 34 35 34M18 64h50M18 98h15c21 0 13-34 35-34" />
+<circle cx="86" cy="64" r="25" /><circle cx="86" cy="64" r="11" stroke-width="2" />
+</g><circle cx="86" cy="64" r="4" fill="#f6cd82" />
+</svg>

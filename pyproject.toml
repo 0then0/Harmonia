@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "harmonia-engine"
+version = "0.1.0"
+description = "An independent, explainable engine for music libraries and playlist compilation"
+readme = "README.md"
+requires-python = ">=3.10,<3.16"
+license = "Apache-2.0"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "pydantic>=2.10,<3",
+  "httpx>=0.28,<1", "sqlalchemy[asyncio]>=2.0,<3", "alembic>=1.14,<2",
+  "psycopg[binary]>=3.2,<4", "redis>=5,<6", "arq>=0.26,<0.27",
+  "PyYAML>=6.0.2,<7", "ytmusicapi>=1.10,<2", "yandex-music>=2.2,<3",
+]
+
+[project.urls]
+Homepage = "https://github.com/0then0/Harmonia"
+Issues = "https://github.com/0then0/Harmonia/issues"
+Documentation = "https://github.com/0then0/Harmonia/blob/main/README.md"
+
+[project.scripts]
+playlist = "harmonia.cli:main"
+playlist-worker = "harmonia.infrastructure.jobs:main"
+
+[dependency-groups]
+dev = ["pytest>=8,<9", "pytest-asyncio>=0.25,<1", "pytest-cov>=6,<8", "ruff>=0.11,<1"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/harmonia"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = ["integration: requires disposable PostgreSQL and Redis"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+ignore = ["E501"]

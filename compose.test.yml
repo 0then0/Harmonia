@@ -1,0 +1,23 @@
+# Disposable test services; no persistent volumes and no public ports.
+services:
+  postgres:
+    image: postgres:17-bookworm@sha256:858bb5e98eed02eb8cafbcdc007f9a65d1b613972028944a8ec2133ccaf80d27
+    environment:
+      POSTGRES_USER: harmonia_test
+      POSTGRES_PASSWORD: disposable_test_password
+      POSTGRES_DB: harmonia_test
+    ports: ['127.0.0.1:55432:5432']
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U harmonia_test -d harmonia_test]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  redis:
+    image: redis:7.4-alpine@sha256:892022f9f18c26c92c30e15194d132f90044af87b94a491a75429bbc3982eab1
+    ports: ['127.0.0.1:56379:6379']
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 2s
+      timeout: 2s
+      retries: 30

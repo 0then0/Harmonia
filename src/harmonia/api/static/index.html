@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><title>Harmonia · Playlist workbench</title><link rel="icon" type="image/svg+xml" href="/static/icon.svg"><script src="/static/theme.js"></script><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
+<body>
+<header><a href="/" class="brand"><img class="mark" src="/static/icon.svg" width="40" height="40" alt=""> harmonia<span class="edition">/ workbench</span></a><div class="header-tools"><span class="local"><i></i> SELF-HOSTED · 0.1</span><div class="theme-control"><label for="theme">Theme</label><select id="theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></header>
+<main>
+<div class="intro"><div><p class="eyebrow">YOUR LIBRARY / YOUR CONSTRAINTS</p><h1>Playlist workbench</h1><p class="lede">Compile from your library. Review the order and every catalogue match before exporting.</p></div><div class="session"><label for="api-key">Operator API key</label><div class="inline"><input id="api-key" type="password" autocomplete="off" placeholder="Session only"><button id="connect">Unlock</button></div><p class="muted">Credentials stay in server configuration.<br>The operator key stays in this tab’s memory.</p></div></div>
+<div id="status" role="status" aria-live="polite">Enter the HARMONIA_API_KEY configured on your server.</div>
+<nav aria-label="Workspace"><button class="tab active" data-tab="workbench" aria-current="page">01 / Compile</button><button class="tab" data-tab="matches">02 / Match & export</button><button class="tab" data-tab="connections">03 / Connections</button></nav>
+<section id="workbench" class="panel">
+<div class="workspace"><aside><div class="section-heading"><h2>Library</h2><button class="text-button" id="refresh">Refresh</button></div><p class="muted">Select imported playlists as the candidate pool.</p><div id="libraries" class="library-list"><p class="empty">Your library will appear here.</p></div><button id="load-more" class="text-button" hidden>Load more playlists</button><div class="import-box"><h3>Import a playlist</h3><label for="import-provider">Service</label><select id="import-provider"><option value="spotify">Spotify</option><option value="youtube">YouTube Music</option><option value="yandex">Yandex Music</option></select><label for="import-reference">Playlist URL or ID</label><input id="import-reference" placeholder="https://open.spotify.com/playlist/…"><button id="import" class="secondary">Import from service</button><label class="file-label" for="upload">Import canonical JSON<input type="file" id="upload" accept=".json,application/json"></label><button id="demo" class="text-button">Load clearly labelled demo library</button></div></aside>
+<div class="editor"><div class="section-heading"><h2>Playlist constraints</h2><span class="format">YAML</span></div><label for="constraints" class="sr-only">Declarative playlist configuration</label><textarea id="constraints" spellcheck="false">title: Night drive
+duration: 90m
+random_seed: 42
+seed:
+  artists: [Massive Attack, Portishead]
+tempo:
+  start: 85
+  end: 125
+rules:
+  max_tracks_per_artist: 2
+  artist_gap: 1
+  avoid_live: true
+  avoid_remixes: true
+  explicit: false
+  missing_features: allow
+transitions:
+  bpm_smoothness: 0.8
+  harmonic_key: 0.7
+</textarea><div class="editor-footer"><span>Deterministic · no AI required</span><button id="build">Compile playlist <span aria-hidden="true">↗</span></button></div></div></div>
+<div class="result"><div class="section-heading"><div><p class="eyebrow">COMPILER OUTPUT</p><h2 id="result-title">Ready when your library is.</h2></div><button id="download" class="secondary" disabled>Download JSON</button></div><p class="muted" id="result-meta">Unknown features remain unknown. Audio is never downloaded.</p><div id="result-attribution"></div><div id="warnings"></div><div class="table-scroll"><table><thead><tr><th scope="col">#</th><th scope="col">Recording / artist</th><th scope="col">Version</th><th scope="col">Time</th><th scope="col">BPM</th><th scope="col">Key</th><th scope="col">Mood</th></tr></thead><tbody id="tracks"><tr><td colspan="7" class="empty">Compile a playlist or open a library to inspect its tracks.</td></tr></tbody></table></div></div>
+</section>
+<section id="matches" class="panel" hidden><div class="section-heading"><div><p class="eyebrow">EXPLAINABLE TRANSFER</p><h2>Inspect before publishing.</h2></div></div><p class="muted">Export creates a new private playlist. Every row below is an addition; existing remote playlists are untouched. Ambiguous matches block export.</p><div class="transfer-controls"><div><label for="source-playlist">Source playlist</label><select id="source-playlist"><option value="">Import or compile a playlist first</option></select></div><div><label for="target-provider">Destination</label><select id="target-provider"><option value="spotify">Spotify</option><option value="youtube">YouTube Music</option><option value="yandex">Yandex Music</option></select></div><button id="preview">Generate dry-run</button></div><div id="match-attribution"></div><div id="match-list" class="match-list"><p class="empty">The dry-run shows confidence, reasons, and alternative catalogue entries.</p></div><div class="publish"><div><label for="idempotency">Idempotency key</label><input id="idempotency" placeholder="night-drive-2026-10-22"></div><button id="export" disabled>Create private playlist</button></div></section>
+<section id="connections" class="panel" hidden><p class="eyebrow">PROVIDER ADAPTERS</p><h2>Independent core. Explicit capabilities.</h2><p class="muted">Configure tokens in the server environment and restart API and worker. Browser credentials must be mounted read-only. This single-operator workbench has no hosted account or token vault.</p><div id="providers" class="providers"></div><div id="remote-playlists"></div><p class="muted">Spotify requires an OAuth access token; renew it when it expires. YouTube Music and Yandex Music use unofficial SDKs. Availability depends on service permissions and region. No audio analysis endpoints are called.</p></section>
+<footer><span>HARMONIA / OPEN SOURCE MUSIC ENGINE</span><a href="/docs" target="_blank" rel="noopener">OpenAPI reference ↗</a></footer>
+</main></body></html>

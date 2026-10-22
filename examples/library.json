@@ -1,0 +1,670 @@
+{
+  "schema_version": 1,
+  "id": "demo:library",
+  "title": "DEMO / Synthetic night library",
+  "tracks": [
+    {
+      "id": "demo:00",
+      "recording": {
+        "title": "Harbour Lights",
+        "artists": [
+          {
+            "name": "Demo Ensemble A",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 360000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "downtempo"
+      ],
+      "features": {
+        "bpm": 85.0,
+        "key": "C",
+        "scale": "minor",
+        "energy": 0.2,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.9,
+          "dark": 0.7,
+          "energetic": 0.15
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:01",
+      "recording": {
+        "title": "After the Rain",
+        "artists": [
+          {
+            "name": "Demo Ensemble B",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 390000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "trip-hop"
+      ],
+      "features": {
+        "bpm": 88.0,
+        "key": "G",
+        "scale": "minor",
+        "energy": 0.25,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.84,
+          "dark": 0.7,
+          "energetic": 0.21
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:02",
+      "recording": {
+        "title": "Tunnel Echo",
+        "artists": [
+          {
+            "name": "Демо группа В",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 420000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "electronic"
+      ],
+      "features": {
+        "bpm": 91.0,
+        "key": "D",
+        "scale": "minor",
+        "energy": 0.3,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.78,
+          "dark": 0.7,
+          "energetic": 0.27
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:03",
+      "recording": {
+        "title": "Blue Hour",
+        "artists": [
+          {
+            "name": "Demo Ensemble D",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 450000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "downtempo"
+      ],
+      "features": {
+        "bpm": 94.0,
+        "key": "A",
+        "scale": "minor",
+        "energy": 0.35,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.72,
+          "dark": 0.7,
+          "energetic": 0.33
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:04",
+      "recording": {
+        "title": "Late Platform",
+        "artists": [
+          {
+            "name": "Demo Ensemble E",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 360000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "trip-hop"
+      ],
+      "features": {
+        "bpm": 97.0,
+        "key": "C",
+        "scale": "minor",
+        "energy": 0.4,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.66,
+          "dark": 0.7,
+          "energetic": 0.39
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:05",
+      "recording": {
+        "title": "Night Windows",
+        "artists": [
+          {
+            "name": "Demo Ensemble F",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 390000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "electronic"
+      ],
+      "features": {
+        "bpm": 100.0,
+        "key": "G",
+        "scale": "minor",
+        "energy": 0.45,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.6,
+          "dark": 0.7,
+          "energetic": 0.45
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:06",
+      "recording": {
+        "title": "Signal North",
+        "artists": [
+          {
+            "name": "Demo Ensemble G",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 420000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "downtempo"
+      ],
+      "features": {
+        "bpm": 103.0,
+        "key": "D",
+        "scale": "minor",
+        "energy": 0.5,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.54,
+          "dark": 0.7,
+          "energetic": 0.51
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:07",
+      "recording": {
+        "title": "Empty Streets",
+        "artists": [
+          {
+            "name": "Demo Ensemble A",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 450000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "trip-hop"
+      ],
+      "features": {
+        "bpm": 106.0,
+        "key": "A",
+        "scale": "minor",
+        "energy": 0.55,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.48,
+          "dark": 0.7,
+          "energetic": 0.57
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:08",
+      "recording": {
+        "title": "Across the River",
+        "artists": [
+          {
+            "name": "Demo Ensemble B",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 360000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "electronic"
+      ],
+      "features": {
+        "bpm": 109.0,
+        "key": "C",
+        "scale": "minor",
+        "energy": 0.6,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.42,
+          "dark": 0.7,
+          "energetic": 0.63
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:09",
+      "recording": {
+        "title": "First Train",
+        "artists": [
+          {
+            "name": "Демо группа В",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 390000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "downtempo"
+      ],
+      "features": {
+        "bpm": 112.0,
+        "key": "G",
+        "scale": "minor",
+        "energy": 0.65,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.36,
+          "dark": 0.7,
+          "energetic": 0.69
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:10",
+      "recording": {
+        "title": "City Wakes",
+        "artists": [
+          {
+            "name": "Demo Ensemble D",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 420000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "trip-hop"
+      ],
+      "features": {
+        "bpm": 115.0,
+        "key": "D",
+        "scale": "minor",
+        "energy": 0.7,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.3,
+          "dark": 0.7,
+          "energetic": 0.75
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:11",
+      "recording": {
+        "title": "Sunrise Exit",
+        "artists": [
+          {
+            "name": "Demo Ensemble E",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 450000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "original"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "electronic"
+      ],
+      "features": {
+        "bpm": 118.0,
+        "key": "A",
+        "scale": "minor",
+        "energy": 0.75,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.24,
+          "dark": 0.7,
+          "energetic": 0.81
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:12",
+      "recording": {
+        "title": "Night Windows (Live)",
+        "artists": [
+          {
+            "name": "Demo Ensemble F",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 360000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "live"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "downtempo"
+      ],
+      "features": {
+        "bpm": 121.0,
+        "key": "C",
+        "scale": "minor",
+        "energy": 0.8,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.18,
+          "dark": 0.7,
+          "energetic": 0.87
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    },
+    {
+      "id": "demo:13",
+      "recording": {
+        "title": "Tunnel Echo (Remix)",
+        "artists": [
+          {
+            "name": "Demo Ensemble G",
+            "musicbrainz_id": null,
+            "provider_ids": {}
+          }
+        ],
+        "duration_ms": 390000,
+        "isrc": null,
+        "musicbrainz_id": null,
+        "versions": [
+          "remix"
+        ]
+      },
+      "album": {
+        "title": "Synthetic demonstration",
+        "musicbrainz_id": null,
+        "release_group_id": null,
+        "date": null,
+        "provider_ids": {}
+      },
+      "providers": [],
+      "explicit": false,
+      "genres": [
+        "trip-hop"
+      ],
+      "features": {
+        "bpm": 124.0,
+        "key": "G",
+        "scale": "minor",
+        "energy": 0.85,
+        "loudness": null,
+        "beat_positions": [],
+        "mood": {
+          "relaxed": 0.12,
+          "dark": 0.7,
+          "energetic": 0.93
+        },
+        "embedding": null,
+        "fingerprint": null,
+        "provenance": "synthetic demo; not a measured recording"
+      }
+    }
+  ],
+  "provider": null,
+  "revision": null,
+  "warnings": [
+    "Synthetic titles and features. These are not measurements of commercial recordings."
+  ]
+}

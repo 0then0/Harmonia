@@ -1,0 +1,29 @@
+title: Night drive
+duration: 90m
+random_seed: 42
+seed:
+  artists:
+    - Massive Attack
+    - Portishead
+tempo:
+  start: 85
+  end: 125
+energy:
+  start: 0.2
+  end: 0.85
+mood:
+  start: relaxed
+  middle: dark
+  end: energetic
+rules:
+  max_tracks_per_artist: 2
+  artist_gap: 1
+  avoid_live: true
+  avoid_remixes: true
+  explicit: false
+  missing_features: allow
+transitions:
+  bpm_smoothness: 0.8
+  harmonic_key: 0.7
+  genre_diversity: 0.3
+  semantic_similarity: 0

@@ -1,0 +1,16 @@
+name: Provider request
+description: Propose or improve a metadata adapter.
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: Service and official API or SDK documentation
+    validations:
+      required: true
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Required capabilities and known access restrictions
+      description: Include scopes, supported regions, quota rules and unofficial API limitations. No credentials.
+    validations:
+      required: true

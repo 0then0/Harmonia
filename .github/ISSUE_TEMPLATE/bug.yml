@@ -1,0 +1,20 @@
+name: Bug report
+description: Report a reproducible defect without secrets or personal library data.
+body:
+  - type: textarea
+    id: behaviour
+    attributes:
+      label: Expected and actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Use synthetic canonical JSON, constraints, versions and sanitized errors. Never include tokens or audio.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Python, OS, provider and deployment versions

@@ -1,1 +1,1 @@
-"""Pure models and algorithms. No network, database, SDK, or framework imports."""
+"""Canonical models and deterministic algorithms without external I/O."""

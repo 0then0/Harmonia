@@ -1,70 +1,77 @@
 # Architecture
 
-Harmonia treats a service catalogue as one view of music, never as its internal identity system. Version 0.1 uses one Python package and one deployable image, with separate API and worker processes. No Django models or ORM entities orchestrate external calls.
+Harmonia separates music identity and playlist policy from service APIs. Canonical models and algorithms run in one Python package; the hosted deployment runs API and worker processes from the same container image.
 
 ```mermaid
 flowchart LR
-    CLI[CLI / offline compiler] --> Domain
-    UI[Operator UI] --> API[FastAPI]
-    API --> Jobs[ARQ jobs]
-    Jobs --> Application
+    CLI[Offline CLI] --> Domain[Canonical models, matching, compiler]
+    UI[Web workbench] --> API[FastAPI]
+    API --> Queue[ARQ job queue]
+    Queue --> Worker[Worker]
+    Worker --> Application[Transfer services]
     API --> Application
-    Application --> Domain[Canonical models / matching / compiler]
-    Application --> Providers[Provider adapters]
-    Providers --> Spotify
-    Providers --> YouTube[YouTube Music SDK]
-    Providers --> Yandex[Yandex Music SDK]
+    Application --> Domain
+    Application --> Providers[Spotify, YouTube Music, Yandex Music]
     Application --> MB[MusicBrainz metadata]
-    Application --> Store[PostgreSQL snapshots / mappings / write journal]
-    MB --> Redis[Redis cache / shared rate limiter]
-    Jobs --> Redis
+    Application --> Store[PostgreSQL]
+    Worker --> Domain
+    Worker --> Store
+    MB --> Redis[Redis cache and rate limiter]
+    Queue --> Redis
 ```
 
-## Boundaries
+## Package boundaries
 
-- `domain/`: validated Pydantic value objects and deterministic pure algorithms. No HTTP, database, SDK, environment, API or job imports. Pydantic is a schema/validation dependency, not an application framework boundary.
-- `application/`: transfer previews, confirmed mappings, occurrence-aware diffs and export orchestration. It receives provider/store objects rather than importing an adapter.
-- `providers/`: the async `Provider` contract, capability declarations and three adapters. Spotify uses async httpx; Yandex uses ClientAsync; the blocking YouTube SDK is serialized through a lock and offloaded to a thread. Adapters convert metadata at their boundary. They do not fetch audio, make playlist policy decisions, or generate features.
-- `infrastructure/`: SQLAlchemy persistence, HTTP retries, Redis cache/limiter, runtime configuration, MusicBrainz and ARQ jobs. MusicBrainz is a metadata layer rather than a playable streaming provider.
-- `api/` and `cli.py`: presentation and input validation. API queues long operations. CLI compilation runs completely offline. The UI uses ordinary DOM APIs with `textContent` for catalogue data.
+- [`domain/`](src/harmonia/domain/): Pydantic models, metadata normalization, recording matching and playlist optimization. These modules have no network, database or provider SDK dependencies.
+- [`application/`](src/harmonia/application/): transfer previews, ordered diffs and export orchestration. Services receive providers and storage objects as arguments.
+- [`providers/`](src/harmonia/providers/): the async provider contract, capabilities and adapters. Spotify uses httpx; Yandex Music uses ClientAsync; YouTube Music serializes access to its synchronous SDK session and offloads calls to a thread.
+- [`infrastructure/`](src/harmonia/infrastructure/): persistence, configuration, HTTP retries, Redis cache/rate limiting, MusicBrainz and background jobs. `Runtime` constructs and closes these resources.
+- [`api/`](src/harmonia/api/) and [`cli.py`](src/harmonia/cli.py): request validation and presentation. The API queues imports, compilation, transfer previews and exports. Offline CLI compilation uses the domain directly.
 
-## Canonical model
+Add services through the [provider contract](docs/provider-development.md). Provider-specific branches belong in adapters and runtime wiring, not in the matcher or compiler.
 
-An Artist is an identity/credit. A Recording is a performance/version independent of a release. A Release is an album/edition. A Track combines a recording with release context, explicit flag, genres, provider identifiers and optional user-supplied AudioFeatures. A Playlist is an ordered sequence of track occurrences, so imports preserve duplicates. ProviderTrack records provider identity, link and availability. IDs remain namespaced by provider unless explicitly reconciled; a MusicBrainz match does not silently overwrite another provider's identity.
+## Canonical data
 
-A recording may carry multiple version tags, such as live + remaster. Version detection considers labelled descriptors after separators or within brackets; words in bare titles are preserved. Named edition details (remixer, venue, remaster year) are retained for review gates and duplicate identity instead of being erased with the generic version label. Incomplete or misleading catalogue metadata can still need manual review. The matcher never claims that metadata alone can prove audio identity.
+`Artist` represents a musical credit. `Recording` represents a performance or version independently of its release. `Release` describes an album or edition. `Track` combines recording and release metadata with explicit status, genres, provider identifiers and optional `AudioFeatures`. `ProviderTrack` carries a service ID, URL and availability. `Playlist` is an ordered sequence of track occurrences, including duplicates.
 
-Snapshots and features are stored as validated JSON aggregates in PostgreSQL. This supports lossless import/export and straightforward schema versioning without a premature music graph schema. Playlist keys, confirmed mappings and operation keys have database-enforced primary keys. A future large catalogue can add normalized recording/search tables via migrations without changing core algorithms. Snapshot schema version 1 rejects unknown fields instead of silently ignoring misspellings.
+Provider IDs remain separate from independent recording IDs. MusicBrainz enrichment can add recording identity without replacing a provider ID. Duration is stored in milliseconds; supplied beat positions use seconds. Features include BPM, key, scale, energy, mood, loudness, beat positions, embedding and fingerprint fields. The compiler uses supported supplied features; Harmonia does not calculate audio features or retrieve streaming audio.
 
-## Matching decisions
+A recording can have multiple version tags, such as live and remaster. Version detection reads labelled descriptors after separators or within brackets, preserving words in ordinary titles such as “Live Forever”. Named remixers, live venues and remaster years remain part of edition identity.
 
-Every candidate first passes version compatibility, contradictory MusicBrainz ID, title/artist plausibility and known duration checks. Passing candidates receive identifier priority: exact ISRC, exact MusicBrainz recording ID, then weighted text/artist/duration/album evidence. Fuzzy matching uses the standard library with bounded input lengths. Scores sort deterministically by confidence and track ID. A gap below 0.025 between the leading candidates requires review; the default automatic threshold is 0.90. Alternative results are retained for explanation.
+PostgreSQL stores validated JSON snapshots, confirmed mappings, previews and an export journal. Playlist, mapping and operation keys have primary-key constraints. Canonical schema version 1 rejects unknown fields. Import replaces a stored snapshot in a short transaction; it does not keep a transaction open while fetching a remote playlist.
 
-Search collects an exact-ISRC query when supported and a metadata query for alternatives. MusicBrainz can enrich the source recording only when its own conservative match is unambiguous. A missing MusicBrainz ISRC returns an empty negative-cached result. Ambiguous or unavailable MusicBrainz evidence produces a preview with explicit review reasons instead of silently confirming a match or aborting the entire preview. A persisted manual override short-circuits searches and is explicitly labelled. Confirmed mappings are per source track and destination provider; there is no global fuzzy cache that could spread one wrong match across unrelated users.
+## Matching
 
-## Compilation
+Candidates first pass checks for incompatible versions, contradictory recording IDs, implausible artist/title combinations and large known duration differences. Compatible candidates receive priority for exact ISRC or MusicBrainz recording identity, followed by weighted artist/title, duration and album evidence. Fuzzy similarity uses the standard library.
 
-Filtering enforces known duration, explicit policy, versions and required features. A beam carries candidate sequences, with deterministic seeded hashes for equal-score ordering. A quarter of its slots retain shorter prefixes to avoid stranding every path with an unfillable duration gap. Each expansion checks artist counts, recent artist overlap and recording identity (shared ISRC, MusicBrainz ID, or normalized artist/title plus version). Its objective combines target-duration coverage and mean per-track/transition quality. Curves are anchored to elapsed requested duration, so a short partial sequence does not pretend to reach the end of a 90-minute energy curve. Two bounded swap passes refine order without weakening constraints.
+The default automatic threshold is 0.90. A gap below 0.025 between the leading candidates requires review, as do conflicting edition details or known duration differences above five seconds. Results include reasons and alternatives and sort deterministically by confidence and track ID. Confidence is a heuristic score, not a calibrated probability.
 
-The solver is a function accepting constraints and canonical candidates. A future OR-Tools implementation can implement that same function shape; no abstract solver factory is introduced before a second solver exists. The bounded heuristic can underfill or find a local optimum. Its result contains warnings, and the user sees the actual duration.
+Transfer previews collect ISRC results where supported and metadata-search alternatives. MusicBrainz enriches recording identity only when its own match is unambiguous. Missing ISRC metadata is cached as an empty result; ambiguous or unavailable identity evidence produces a review reason. Unavailable destination IDs are excluded.
 
-## Transactions, concurrency, failure handling
+Confirmed mappings are stored per source track and destination provider. A usable manual mapping takes precedence over searches and is labelled `manual_override`. Confirmation can intentionally select a different edition. Exports require a stored preview with every match resolved.
 
-Import upserts a complete snapshot in a short transaction. Spotify imports check snapshot ID before and after pagination; YouTube/Yandex imports have no transactional remote snapshot guarantee. Plans are immutable PostgreSQL records generated by the worker; the export endpoint accepts a stored plan ID instead of trusting client-supplied `ready: true`.
+## Compilation and optimization
 
-An export inserts a unique operation key and payload digest before any external write. Conflicts return a completed result or refuse to replay an unresolved operation. No database transaction stays open during network requests. This prevents duplicate creates for one key but cannot solve the distributed crash window. Pending/uncertain operations need operator reconciliation. Multi-call exports can partially succeed. Read retries are safe; writes have one attempt. ARQ retries are disabled for mutation jobs.
+Filtering enforces duration availability, explicit policy, version exclusions and requested feature availability. Each beam-search expansion checks recording identity, artist counts and recent artist overlap. Candidate tie-breaking uses a hash of the configured seed and ordered track IDs. Some beam slots retain shorter prefixes so the search can fill duration gaps.
 
-Redis's atomic script checks request eligibility using Redis server time and rechecks after every delayed wake, so MusicBrainz rate limiting coordinates API and workers. API and worker must share Redis; other instances behind one egress IP should too. Cache keys hash requests and contain no credentials. PostgreSQL stores no provider access tokens; they live in operator-managed environment/read-only files.
+The objective balances duration coverage with tempo, energy and mood curves, seed affinity, harmonic compatibility and adjacent genre diversity. Curves follow elapsed time relative to the requested duration. Two bounded swap passes refine ordering while preserving hard constraints.
 
-## API and security scope
+The optimizer is a deterministic heuristic and can underfill the requested duration or reach a local optimum. The result includes actual track durations and warnings. Input bounds keep work finite: 1,000 candidates, up to 200 output tracks and beam width 1–32. See [constraints](docs/usage.md#constraints-and-preferences) for public configuration semantics.
 
-The API has one operator key, required at startup and compared with a constant-time comparison. All `/api` endpoints require it. Only UI/static assets, OpenAPI documentation and process liveness are public. No CORS wildcard, cookie authentication, implicit third-party requests, public registration or arbitrary URL fetch endpoint is enabled. Browser state does not persist secrets; only the system/light/dark theme preference is stored locally. The Docker API binds to loopback; remote deployments need TLS and reverse-proxy limits. API and worker use one trusted provider account per service in this release.
+## Jobs, writes and concurrency
 
-This is a functional baseline with deployment foundations, not a security audit or a multi-tenant application. Full account linking/token lifecycle, stable provider-specific live tests, operational retention/backup policy and destructive-update reconciliation remain deployment/release work.
+Long-running API operations return a job ID. ARQ stores queue state and results in Redis; results expire after 24 hours. PostgreSQL stores previews and operation history independently of job result expiry.
 
-## Iterations
+Before a remote export, a unique operation key and payload digest are committed to PostgreSQL. Concurrent claims cannot issue duplicate creates for that key. A recorded success can be returned on replay; an unresolved operation blocks replay. External I/O occurs outside the database transaction. Writes and mutation jobs are not automatically retried.
 
-1. Current: independent core, three metadata adapters, MusicBrainz, conservative matching, canonical import/export, deterministic compiler and bounded optimizer, API/CLI/UI and deployment/tests.
-2. Existing-playlist one-way synchronization: reviewed ordered diffs, stronger remote revision guarantees, resumable reconciliation and conflict tests. Add full token lifecycle before multi-user connections.
-3. Local analysis worker/CLI: Essentia, Chromaprint and AcoustID only for explicit local files; no upload when local analysis suffices. Add measured feature provenance and model/version metadata. No streaming-service audio download or analysis.
-4. Optional text-to-constraints AI behind a provider interface. OpenAI, Anthropic, Gemini and Ollama can emit only validated PlaylistConstraints. They cannot supply fabricated track IDs or bypass core constraints. Embeddings and other solvers should be added only for a measured quality improvement.
+A remote timeout or process crash can occur after a playlist has been created or partly populated. PostgreSQL cannot make the service write transactional; pending or uncertain operations require [operator recovery](docs/operations.md#export-recovery). Spotify import checks its revision before and after pagination. YouTube Music and Yandex Music imports have no equivalent transactional snapshot guarantee.
+
+MusicBrainz requests use an atomic Redis limiter based on Redis server time. Delayed callers recheck eligibility after waking. API and worker share this limiter and metadata cache. Cache keys contain hashes of requests rather than credentials.
+
+## Deployment and access model
+
+The hosted application has one operator API key and one account per configured service. Every `/api` route requires `X-API-Key`; static assets, OpenAPI and `/healthz` are public. The operator key remains in browser memory. Only the theme preference is saved in localStorage.
+
+PostgreSQL does not store provider tokens. Credentials come from server environment variables or read-only files. Compose binds the API to loopback and leaves PostgreSQL/Redis on its private network. Remote access requires TLS and reverse-proxy limits. The application provides no public registration or tenant isolation.
+
+Existing-playlist synchronization, account linking/token refresh, local audio analysis and AI interfaces are outside the current API. Any audio analysis extension must operate on user-provided local files. A text-to-constraints interface must emit validated constraints and leave track selection to the compiler.

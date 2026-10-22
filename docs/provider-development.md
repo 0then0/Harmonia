@@ -1,35 +1,59 @@
 # Adding a provider
 
-Core algorithms consume canonical data and do not know Spotify, YouTube Music or Yandex endpoints. Add a module under `src/harmonia/providers/`; do not import the new SDK from `domain/` or add provider branches to the matcher/compiler.
+A provider translates a service catalogue into canonical music metadata and implements supported playlist operations. Add an adapter under `src/harmonia/providers/`, then register it in runtime and presentation code. The domain matcher and compiler remain unchanged.
 
-1. Subclass `Provider` from `providers/base.py`. Implement `search`, `list_playlists`, `read_playlist`, `create_playlist` and optional `close` cleanup. All public I/O methods are async. Use an async HTTP library where possible; if a required SDK blocks, serialize its session and run it with `asyncio.to_thread` as the YouTube adapter does.
-2. Declare every `Capabilities` flag honestly. Here capabilities describe **implemented adapter operations**, not everything the upstream service can theoretically do. `oauth` means the adapter accepts OAuth bearer access tokens; it does not promise a redirect/refresh UI. Likes and ISRC search remain false until implemented and tested. Use `require()` to reject unsupported requests rather than substituting a text search for an ISRC query.
-3. Convert the upstream response to Artist/Recording/Release/Track. Preserve missing fields as `None`, service track ID/link, explicit/availability flags, all credited artists, duration in milliseconds, version descriptors and release context. Do not infer ISRC or audio features from unrelated fields. Keep service album IDs when writes require them. Skip unavailable/null/non-music items with visible warnings rather than returning a shortened playlist silently.
-4. Implement complete pagination with bounded safety limits. Never silently import just the first page. Do not follow untrusted pagination URLs with authorization headers outside the fixed provider origin. Validate URL/URI references into an identifier before constructing a request.
-5. Use explicit HTTP timeouts. Retry bounded safe reads with exponential backoff and Retry-After when available. Never retry non-idempotent creates/appends on timeout. Sanitize SDK exceptions; tokens and raw response bodies must not enter API responses or logs. Create playlists privately. Validate all target IDs before the first write. Document partial-success behaviour.
-6. Wire credentials and construction in `infrastructure/config.py` and `runtime.py`. Add the provider name to API validation and the UI/CLI selection lists. This is the composition/presentation layer, **not core**. No plugin registry, dynamic loading or new architectural package is needed for three adapters.
-7. Extend the shared provider contract tests in `tests/test_providers.py` with a fake/MockTransport and representative upstream responses. Test pagination, unavailable entries, missing optional metadata, all write preconditions, revision conflicts if supported, auth failures, timeout/retry and malformed data. Test SDK payloads against the installed SDK's signatures. Live mutation tests require a deliberately disposable private playlist and explicit authorization.
-8. Document credentials, scopes, unofficial API status, restrictions, capability limits and supported reference syntax. Add new dependencies only when approved. Update the lockfile intentionally.
+## Contract and capabilities
 
-A minimal adapter has this shape:
+Subclass [`Provider`](../src/harmonia/providers/base.py) and implement these async methods:
+
+- `search(query, *, isrc=False)`: return canonical Track candidates.
+- `list_playlists()`: return playlist summaries accessible to the account.
+- `read_playlist(reference)`: return the complete ordered snapshot with warnings for omitted entries.
+- `create_playlist(title, tracks)`: create a private playlist from destination IDs.
+- `close()`: release owned clients or sessions when needed.
+
+Declare every `Capabilities` flag to describe implemented adapter operations. Defaults enable search, playlist reads and creation; all other flags default to false. Call `require()` before an unsupported optional operation. ISRC search must be an actual ISRC query rather than a text-search approximation.
+
+The `oauth` flag means that the adapter accepts OAuth access tokens; it does not imply that Harmonia manages authorization redirects, token storage or refresh. Likes have no shared public methods yet and should remain false unless the interface and its callers are extended together.
+
+Declare optional operations explicitly, for example:
 
 ```python
-from harmonia.providers.base import Capabilities, Provider
+from harmonia.providers.base import Capabilities
 
-
-class ExampleProvider(Provider):
-    name = "example"
-    capabilities = Capabilities(isrc_search=False, oauth=False)
-
-    async def search(self, query, *, isrc=False):
-        if isrc:
-            self.require("isrc_search")
-        # GET metadata using a fixed origin, then return canonical Track objects.
-        ...
-
-    async def list_playlists(self): ...
-    async def read_playlist(self, reference): ...
-    async def create_playlist(self, title, tracks): ...
+capabilities = Capabilities(isrc_search=False, oauth=False)
 ```
 
-The ellipses above illustrate the boundary only; a real adapter must implement every operation it declares. Apple Music, TIDAL, Deezer, Qobuz and Amazon Music can use this same contract without modifying domain code. Do not promise upstream access until its authorization and catalogue APIs have been verified.
+Use the existing adapters as complete examples: [Spotify](../src/harmonia/providers/spotify.py) for async HTTP, [YouTube Music](../src/harmonia/providers/youtube.py) for a blocking SDK, and [Yandex Music](../src/harmonia/providers/yandex.py) for an async SDK.
+
+## Metadata conversion
+
+Convert responses to Artist, Recording, Release and Track at the adapter boundary. Preserve all credited artists, duration in milliseconds, version descriptors, release context, service IDs/URLs, explicit status and availability. Preserve album IDs when publication requires them. Keep missing values as `None`; do not invent ISRC, BPM or other features.
+
+Imports must retain order and duplicate occurrences. Resolve abbreviated SDK records into full metadata where needed. Report omitted unavailable/null/non-music entries in `Playlist.warnings`. Implement complete pagination with bounded safety limits; exceeding a limit should fail visibly rather than return an incomplete playlist as complete.
+
+Adapters retrieve metadata only. They must not download streaming audio or invoke service audio-analysis endpoints.
+
+## Transport and write safety
+
+Prefer async HTTP or an async SDK. For blocking SDKs, serialize access to shared sessions and use `asyncio.to_thread`. Use explicit timeouts, bounded read retries and Retry-After where available. Existing helpers are in [`infrastructure/http.py`](../src/harmonia/infrastructure/http.py) and [`providers/sdk.py`](../src/harmonia/providers/sdk.py).
+
+Validate service references into identifiers before constructing requests. Use fixed provider origins; never forward authorization headers to an untrusted pagination URL. Convert SDK failures into sanitized `ProviderError` messages without tokens, raw response bodies or authorization headers.
+
+Validate all destination IDs before the first write and create playlists privately. A timed-out create or append may have succeeded: do not automatically retry it. Document multi-call partial-success behaviour. Existing-playlist mutations need explicit revision/conflict handling; the current API and CLI expose only creation.
+
+## Registration
+
+1. Add credential settings in [`config.py`](../src/harmonia/infrastructure/config.py), keeping secrets out of repr/logging.
+2. Construct and close the adapter in [`runtime.py`](../src/harmonia/infrastructure/runtime.py).
+3. Register its name, reference validation and authentication description in [`api/app.py`](../src/harmonia/api/app.py).
+4. Add it to the CLI choices and workbench service selectors. Update track backlinks and attribution if the service requires them.
+5. Update [provider setup](providers.md), `.env.example` and package dependencies/lockfile when required.
+
+These are integration boundaries; no provider-specific condition is needed in `domain/`.
+
+## Tests and documentation
+
+Extend [`tests/test_providers.py`](../tests/test_providers.py) with shared contract cases and service-specific fixtures. Cover pagination, duplicates, missing metadata, unavailable entries, authentication failures, reference validation, retries, write preconditions and partial failures. Validate SDK payload shapes against the supported SDK rather than mocking a different object type.
+
+Document accepted reference syntax, credentials/scopes, official or unofficial status, account/region restrictions and every capability limit. Run [local and integration checks](testing.md). Live mutation tests require an authorized account and disposable private playlists; mocked tests alone do not establish upstream access.

@@ -1,1 +1,1 @@
-"""HTTP presentation and a small operator UI."""
+"""REST API and web workbench for playlist management."""

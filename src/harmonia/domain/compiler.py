@@ -54,7 +54,7 @@ class Rules(Model):
 class Transitions(Model):
     bpm_smoothness: Probability = 0.8
     harmonic_key: Probability = 0.7
-    # Reserved with an honest validation error until the embedding iteration.
+    # Embedding-based scoring is unsupported; reject non-zero weights.
     semantic_similarity: float = Field(default=0, ge=0, le=0)
     genre_diversity: Probability = 0.3
 

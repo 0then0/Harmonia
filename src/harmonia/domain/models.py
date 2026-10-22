@@ -52,7 +52,7 @@ class Release(Model):
 
 
 class AudioFeatures(Model):
-    """User-supplied metadata in v0.1; no streaming audio or DSP is requested."""
+    """Supplied audio metadata; beat positions are seconds and probabilities are 0–1."""
 
     bpm: float | None = Field(default=None, gt=0, le=400)
     key: str | None = Field(default=None, pattern=r"^[A-G](#|b)?$")

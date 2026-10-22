@@ -73,7 +73,17 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
             if runtime is None:
                 await app.state.runtime.close()
 
-    app = FastAPI(title="Harmonia", version=__version__, lifespan=lifespan)
+    app = FastAPI(
+        title="Harmonia",
+        version=__version__,
+        description=(
+            "Import music metadata, compile playlists and review cross-catalogue matches. "
+            "All /api routes require the operator's X-API-Key. Long-running operations "
+            "return a job ID; poll /api/jobs/{job_id} and inspect the result's ok field. "
+            "Exports create new private playlists from reviewed, stored previews."
+        ),
+        lifespan=lifespan,
+    )
     auth = APIKeyHeader(name="X-API-Key", auto_error=False)
 
     async def authenticated(key: Annotated[str | None, Depends(auth)]):
@@ -97,18 +107,20 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
     async def not_found(request, exc):
         return JSONResponse(status_code=404, content={"detail": "resource not found"})
 
-    @app.get("/healthz")
+    @app.get("/healthz", tags=["Health"], summary="Check API process liveness")
     async def health():
         return {"status": "ok", "version": __version__}
 
-    @api.get("/ready")
+    @api.get("/ready", tags=["Health"], summary="Check PostgreSQL and Redis connectivity")
     async def ready():
         async with rt().store.engine.connect() as connection:
             await connection.execute(text("SELECT 1"))
         await rt().redis.ping()
         return {"status": "ready"}
 
-    @api.get("/providers")
+    @api.get(
+        "/providers", tags=["Providers"], summary="List provider configuration and capabilities"
+    )
     async def providers():
         classes = (Spotify, YouTubeMusic, YandexMusic)
         return [
@@ -125,32 +137,43 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
             for p in classes
         ]
 
-    @api.get("/providers/{provider}/playlists")
+    @api.get(
+        "/providers/{provider}/playlists", tags=["Providers"], summary="List account playlists"
+    )
     async def provider_playlists(provider: str):
         return await rt().provider(provider).list_playlists()
 
-    @api.get("/providers/{provider}/search")
+    @api.get(
+        "/providers/{provider}/search", tags=["Providers"], summary="Search a provider catalogue"
+    )
     async def provider_search(
         provider: str, q: Annotated[str, Query(min_length=1, max_length=500)]
     ):
         return await rt().provider(provider).search(q)
 
-    @api.get("/playlists")
+    @api.get("/playlists", tags=["Library"], summary="List stored playlist summaries")
     async def playlists(
         limit: Annotated[int, Query(ge=1, le=200)] = 200,
         offset: Annotated[int, Query(ge=0)] = 0,
     ):
         return await rt().store.list_playlists(limit=limit, offset=offset)
 
-    @api.get("/playlist")
+    @api.get("/playlist", tags=["Library"], summary="Read a stored canonical playlist")
     async def playlist(id: str):
         return await rt().store.get_playlist(id)
 
-    @api.post("/playlists", status_code=201)
+    @api.post(
+        "/playlists",
+        status_code=201,
+        tags=["Library"],
+        summary="Store a canonical playlist snapshot",
+    )
     async def save_playlist(body: Playlist):
         return {"playlist_id": await rt().store.save_playlist(body)}
 
-    @api.post("/constraints/validate")
+    @api.post(
+        "/constraints/validate", tags=["Compilation"], summary="Validate YAML playlist constraints"
+    )
     async def validate_yaml(body: YAMLRequest):
         try:
             data = await asyncio.to_thread(yaml.safe_load, body.yaml)
@@ -170,7 +193,9 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
         job = await rt().redis.enqueue_job(name, *args, _job_id=str(uuid4()))
         return {"job_id": job.job_id}
 
-    @api.post("/jobs/import", status_code=202)
+    @api.post(
+        "/jobs/import", status_code=202, tags=["Jobs"], summary="Queue a provider playlist import"
+    )
     async def import_playlist(body: ImportRequest):
         rt().provider(body.provider)
         try:
@@ -181,7 +206,7 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
             raise HTTPException(422, str(exc)) from None
         return await enqueue("import_playlist", body.provider, body.reference)
 
-    @api.post("/jobs/build", status_code=202)
+    @api.post("/jobs/build", status_code=202, tags=["Jobs"], summary="Queue playlist compilation")
     async def build(body: CompileRequest):
         libraries = [await rt().store.get_playlist(key) for key in body.playlist_ids]
         count = sum(len(p.tracks) for p in libraries)
@@ -191,7 +216,7 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
             "build_playlist", body.constraints.model_dump(mode="json"), body.playlist_ids
         )
 
-    @api.post("/jobs/preview", status_code=202)
+    @api.post("/jobs/preview", status_code=202, tags=["Jobs"], summary="Queue a transfer preview")
     async def preview(body: PreviewRequest):
         rt().provider(body.provider)
         source = await rt().store.get_playlist(body.playlist_id)
@@ -199,18 +224,25 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
             raise HTTPException(422, "at most 200 tracks per transfer preview")
         return await enqueue("preview_playlist", body.playlist_id, body.provider)
 
-    @api.get("/previews/{preview_id}")
+    @api.get(
+        "/previews/{preview_id}", tags=["Matching"], summary="Read matches from a stored preview"
+    )
     async def get_preview(preview_id: UUID):
         return await rt().store.get_plan(str(preview_id))
 
-    @api.post("/matches/confirm")
+    @api.post("/matches/confirm", tags=["Matching"], summary="Save a manual destination mapping")
     async def confirm(body: ConfirmRequest):
         if not body.target.provider_id(body.provider):
             raise HTTPException(422, "target must contain an available provider ID")
         await rt().store.confirm_mapping(body.source, body.provider, body.target)
         return {"confirmed": True}
 
-    @api.post("/jobs/export", status_code=202)
+    @api.post(
+        "/jobs/export",
+        status_code=202,
+        tags=["Jobs"],
+        summary="Queue a new private playlist export",
+    )
     async def export(body: ExportRequest):
         plan = await rt().store.get_plan(str(body.preview_id))
         if not plan["ready"]:
@@ -220,7 +252,7 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
             )
         return await enqueue("export_playlist", str(body.preview_id), body.idempotency_key)
 
-    @api.get("/jobs/{job_id}")
+    @api.get("/jobs/{job_id}", tags=["Jobs"], summary="Read job status and any completed result")
     async def job_status(job_id: UUID):
         job = Job(str(job_id), rt().redis)
         status = await job.status()
@@ -235,14 +267,20 @@ def create_app(settings: Settings | None = None, runtime=None) -> FastAPI:
                 }
         return {"status": status, "result": result}
 
-    @api.get("/metadata/isrc/{isrc}")
+    @api.get(
+        "/metadata/isrc/{isrc}", tags=["Metadata"], summary="Find MusicBrainz recordings by ISRC"
+    )
     async def isrc_lookup(isrc: str):
         try:
             return await rt().musicbrainz.by_isrc(isrc)
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
 
-    @api.get("/metadata/{entity}/{mbid}")
+    @api.get(
+        "/metadata/{entity}/{mbid}",
+        tags=["Metadata"],
+        summary="Look up a MusicBrainz entity by UUID",
+    )
     async def metadata(entity: str, mbid: UUID):
         try:
             return await rt().musicbrainz.lookup(entity, str(mbid))

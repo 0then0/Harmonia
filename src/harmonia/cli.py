@@ -51,36 +51,44 @@ def parser():
     root = argparse.ArgumentParser(
         description="Harmonia: import, inspect, compile, and export music playlists"
     )
-    root.add_argument("--api", default=os.getenv("HARMONIA_API_URL", "http://127.0.0.1:8000/"))
+    root.add_argument(
+        "--api",
+        default=os.getenv("HARMONIA_API_URL", "http://127.0.0.1:8000/"),
+        help="server base URL (default: HARMONIA_API_URL or http://127.0.0.1:8000/)",
+    )
     commands = root.add_subparsers(dest="command", required=True)
     build = commands.add_parser("build", help="compile locally; no database or API needed")
-    build.add_argument("config")
+    build.add_argument("config", help="YAML playlist constraints")
     build.add_argument(
         "--library", required=True, action="append", help="canonical JSON playlist; repeatable"
     )
-    build.add_argument("--output", "-o")
+    build.add_argument("--output", "-o", help="write canonical JSON to a file instead of stdout")
     match = commands.add_parser("match", help="explain a match against a canonical library")
     match.add_argument("source", help="a canonical Track JSON file")
-    match.add_argument("--library", required=True)
+    match.add_argument("--library", required=True, help="canonical JSON destination library")
     imp = commands.add_parser("import", help="import a provider playlist through the local worker")
     imp.add_argument("provider", choices=["spotify", "youtube", "yandex"])
-    imp.add_argument("reference")
-    imp.add_argument("--output", "-o")
+    imp.add_argument("reference", help="service playlist URL or supported identifier")
+    imp.add_argument("--output", "-o", help="write canonical JSON to a file instead of stdout")
     for name in ("diff", "export"):
         cmd = commands.add_parser(
             name,
             help="preview a transfer"
             if name == "diff"
-            else "export to a NEW private playlist (dry-run by default)",
+            else "create a new private playlist (dry-run by default)",
         )
         cmd.add_argument("playlist", help="canonical JSON playlist")
         cmd.add_argument("--to", required=True, choices=["spotify", "youtube", "yandex"])
         if name == "export":
-            cmd.add_argument("--apply", action="store_true")
-            cmd.add_argument("--idempotency-key")
+            cmd.add_argument(
+                "--apply", action="store_true", help="publish after resolving all matches"
+            )
+            cmd.add_argument(
+                "--idempotency-key", help="unique key for this resolved export payload"
+            )
     confirm = commands.add_parser("confirm", help="persist a manual mapping")
-    confirm.add_argument("source")
-    confirm.add_argument("target")
+    confirm.add_argument("source", help="canonical source Track JSON file")
+    confirm.add_argument("target", help="canonical destination Track JSON file")
     confirm.add_argument("--to", required=True, choices=["spotify", "youtube", "yandex"])
     return root
 

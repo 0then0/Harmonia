@@ -1,11 +1,61 @@
-# Contributing
+# Contributing to Harmonia
 
-Keep changes small and explain the user-visible behaviour. Discuss public contracts, new dependencies and destructive migrations before implementing them. Use Python 3.10–3.15, the checked-in uv lockfile and existing package boundaries. Never add real tokens, browser auth exports, audio, personal library dumps or provider responses containing private data to fixtures.
+Bug fixes, clearer documentation, matching regressions and provider improvements are welcome. For public API changes, new dependencies or destructive migrations, open an issue to agree on scope before implementation.
 
-Set up with `uv sync --frozen`. Run `uv run ruff check .`, `uv run ruff format --check .` and `uv run pytest -m 'not integration'`. For persistence, job and rate-limit changes also run the disposable PostgreSQL/Redis integration workflow in README. CI runs both suites and a container smoke test. No tests may contact a music provider by default. Keep source syntax and standard-library imports compatible with Python 3.10; Ruff targets `py310`. When changing compatibility, validate both installation from the frozen lockfile and the full suite, including the standalone worker bootstrap, on every supported minor version. Do not replace an existing development environment merely to test another interpreter; set `UV_PROJECT_ENVIRONMENT` to a separate path.
+## Development setup
 
-Protect behaviours rather than line coverage: especially wrong edition/artist matches, ambiguity gates, all constraints, deterministic output, pagination, conflicting revisions, concurrent idempotency and uncertain write outcomes. Include a regression test for an observed defect. Domain algorithms must remain independent of API frameworks, databases and provider SDKs.
+Clone the repository and install the locked development environment:
 
-Use `uv run alembic revision --autogenerate -m description` against a disposable migrated database, inspect generated operations and run `alembic upgrade head` / `alembic check`. Never squash, drop or rewrite an applied migration without an explicit migration plan.
+```sh
+git clone https://github.com/0then0/Harmonia.git
+cd Harmonia
+uv sync --frozen
+```
 
-Conventional Commits use English and one of `feat`, `fix`, `refactor`, `chore`, `docs`, `test`. A PR should explain the problem, resulting behaviour, verification actually performed and material limitations. Do not claim live service compatibility from mocked tests alone. Read [the provider guide](docs/provider-development.md) before adding an adapter.
+Use CPython 3.10–3.15. Keep source syntax and standard-library imports compatible with Python 3.10. For another interpreter, use a separate environment rather than replacing your current `.venv`:
+
+```sh
+UV_PROJECT_ENVIRONMENT=../harmonia-venv-310 uv sync --frozen --python 3.10
+UV_PROJECT_ENVIRONMENT=../harmonia-venv-310 uv run pytest -m 'not integration'
+```
+
+[Testing](docs/testing.md) covers integration services, migrations and the CI matrix. [Architecture](architecture.md) explains package boundaries; read [adding a provider](docs/provider-development.md) before implementing an adapter.
+
+## Making a change
+
+Keep the change focused on one problem. Preserve public formats and service authentication behaviour unless the change explicitly updates that contract. Domain algorithms must remain independent of databases, HTTP frameworks and provider SDKs.
+
+Add a regression test for a bug fix. Useful tests check observable behaviour: edition/artist mismatches, ambiguous results, compiler constraints, deterministic output, complete pagination, revision conflicts and concurrent exports. Default tests must not contact real music services.
+
+Use fictional or sanitized fixtures. Do not commit access tokens, browser authentication exports, audio files, personal library dumps or raw provider responses containing private data. Report problems with reproducible metadata rather than account credentials.
+
+## Checks before a pull request
+
+```sh
+uv run ruff check .
+uv run ruff format --check .
+uv run pytest -m 'not integration'
+uv lock --check
+```
+
+Run the [integration suite](docs/testing.md#integration-tests) for persistence, job, transport or rate-limit changes. For container changes, run the documented Compose startup and health checks. Compatibility changes require frozen installation and the full suite on every supported Python minor version.
+
+Dependency changes should be intentional and include `uv.lock`. Dependabot groups updates on a monthly schedule; review compatibility and CI results before merging.
+
+## Database migrations
+
+Generate migrations against a disposable database after applying existing migrations:
+
+```sh
+uv run alembic revision --autogenerate -m description
+uv run alembic upgrade head
+uv run alembic check
+```
+
+Inspect generated operations, consider existing data and document downgrade limits. Keep applied migrations intact. Destructive schema changes require an explicit migration and recovery plan.
+
+## Pull requests and commits
+
+Explain the problem, the resulting behaviour and how it was verified. Include relevant limitations, especially when external account access was not tested. Update user documentation when commands, configuration or behaviour change.
+
+Use English Conventional Commit messages with `feat`, `fix`, `refactor`, `chore`, `docs` or `test`. Follow the [pull request template](.github/pull_request_template.md). Open a [bug report](https://github.com/0then0/Harmonia/issues/new/choose) with a minimal reproduction, or use the provider request template to propose service support.

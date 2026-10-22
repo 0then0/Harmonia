@@ -124,8 +124,8 @@ class WorkerSettings:
 
 
 async def run_worker(*, burst: bool = False):
-    # ARQ 0.26 gets the loop in its constructor. Construct it inside a running
-    # loop rather than rely on implicit loop creation (removed in Python 3.14).
+    # Construct ARQ inside a running loop for compatibility across supported
+    # releases and Python versions without implicit event-loop creation.
     worker = create_worker(WorkerSettings, burst=burst)
     try:
         await worker.async_run()

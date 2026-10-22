@@ -13,6 +13,8 @@ uv run playlist-worker
 
 Use `playlist-worker` (or `python -m harmonia.infrastructure.jobs`) to start the worker on every supported Python version. It creates the event loop explicitly with `asyncio.run()`. The upstream ARQ 0.26 CLI depends on implicit event-loop creation and fails on Python 3.14+; do not use it as this project's worker entry point. `playlist-worker --burst` processes queued jobs and exits.
 
+`playlist-worker --check` exits with 0 when ARQ's worker heartbeat exists in the configured Redis, or 1 when it is missing. The worker refreshes that expiring heartbeat every 10 seconds. Compose uses this check so `docker compose up --wait` also waits for the worker; the heartbeat does not prove successful completion of individual jobs.
+
 Never mount provider browser credentials writable. They can confer account access. Do not expose Redis/PostgreSQL publicly. The default Docker healthcheck proves HTTP process liveness only; monitor authenticated `/api/ready`, worker failures, queue age, PostgreSQL capacity and MusicBrainz 429/503 responses separately. Logs use JSON for application events and deliberately suppress SDK HTTP logs. Avoid enabling debug/wire logs with real tokens.
 
 Add a TLS reverse proxy for remote access with a 5 MB request-body limit and suitable connection/rate limits. The operator API is not designed for untrusted public bulk uploads or multiple tenants. Store the API key in a password manager, not in the UI source or public URL. The web UI keeps the entered operator key only in JavaScript memory and clears the password field after successful unlock.

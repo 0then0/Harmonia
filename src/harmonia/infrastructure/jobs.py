@@ -4,7 +4,7 @@ import logging
 from uuid import uuid4
 
 from arq.connections import RedisSettings
-from arq.worker import create_worker
+from arq.worker import check_health, create_worker
 
 from harmonia.application.transfer import TransferPreview, export_preview, preview_transfer
 from harmonia.domain.compiler import PlaylistConstraints, compile_playlist
@@ -120,6 +120,7 @@ class WorkerSettings:
     max_tries = 1
     retry_jobs = False
     keep_result = 86400
+    health_check_interval = 10
 
 
 async def run_worker(*, burst: bool = False):
@@ -137,8 +138,12 @@ async def run_worker(*, burst: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(description="Run Harmonia background jobs")
-    parser.add_argument("--burst", action="store_true", help="process queued jobs and exit")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--burst", action="store_true", help="process queued jobs and exit")
+    mode.add_argument("--check", action="store_true", help="check the worker heartbeat and exit")
     args = parser.parse_args()
+    if args.check:
+        raise SystemExit(check_health(WorkerSettings))
     asyncio.run(run_worker(burst=args.burst))
 
 

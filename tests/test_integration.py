@@ -183,6 +183,67 @@ async def test_worker_cli_processes_job_from_fresh_interpreter(integration_urls,
         await redis.aclose()
 
 
+async def test_worker_health_cli_tracks_running_worker(integration_urls):
+    import sys
+
+    from arq.constants import default_queue_name, health_check_key_suffix
+
+    redis = await create_pool(RedisSettings.from_dsn(integration_urls[1]))
+    env = {
+        **os.environ,
+        "DATABASE_URL": integration_urls[0],
+        "REDIS_URL": integration_urls[1],
+        "SPOTIFY_ACCESS_TOKEN": "",
+        "YOUTUBE_AUTH_FILE": "",
+        "YANDEX_TOKEN": "",
+    }
+    command = (sys.executable, "-m", "harmonia.infrastructure.jobs")
+    worker = None
+
+    async def check():
+        probe = await asyncio.create_subprocess_exec(
+            *command,
+            "--check",
+            env=env,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            await asyncio.wait_for(probe.communicate(), timeout=10)
+            return probe.returncode
+        finally:
+            if probe.returncode is None:
+                probe.kill()
+                await probe.wait()
+
+    async def wait_for_heartbeat():
+        for _ in range(200):
+            if await redis.exists(default_queue_name + health_check_key_suffix):
+                return
+            await asyncio.sleep(0.05)
+        pytest.fail("Worker did not publish its heartbeat")
+
+    try:
+        assert await check() == 1
+        worker = await asyncio.create_subprocess_exec(
+            *command,
+            env=env,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        await wait_for_heartbeat()
+        assert await check() == 0
+        worker.terminate()
+        stdout, stderr = await asyncio.wait_for(worker.communicate(), timeout=10)
+        assert worker.returncode == 0, (stdout + stderr).decode()
+        assert await check() == 1
+    finally:
+        if worker is not None and worker.returncode is None:
+            worker.kill()
+            await worker.wait()
+        await redis.aclose()
+
+
 async def test_rate_limit_rechecks_overdue_waiters(integration_urls):
     redis = await create_pool(RedisSettings.from_dsn(integration_urls[1]))
     cache = RedisCache(redis, namespace="stall:" + str(uuid4()))

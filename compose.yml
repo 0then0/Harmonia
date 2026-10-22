@@ -61,7 +61,11 @@ services:
     <<: *app
     command: [playlist-worker]
     healthcheck:
-      disable: true
+      test: [CMD, playlist-worker, --check]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
     depends_on:
       migrate:
         condition: service_completed_successfully
